@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Spotify Streamer</string>
+    <string name="action_settings">Settings</string>
+    <string name="search_artist">Search Artist Name</string>
+    <string name="clear_button">X</string>
+    <string name="title_activity_artist_detail">Top 10 Tracks</string>
+    <string name="empty_text">No results found.</string>
+    <string name="no_track_available_text">No track available in your country.</string>
+    <string name ="top_ten">Top 10 Tracks</string>
+    <string name="welcome_topten">Top 10 Tracks</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_player">Spotify Streamer</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_share">Share</string>
+
+    <!-- Preference Constant -->
+    <string name="pref_country_label">Preferred Market</string>
+    <string name="pref_country_key">country</string>
+    <string name="pref_country_default">Current Location</string>
+</resources>

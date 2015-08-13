@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/spotify_listview_bg">
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:background="@color/spotify_listview_bg"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/spotify_listview_margin"
+        android:layout_marginBottom="@dimen/spotify_listview_margin">
+
+        <ImageView
+            android:layout_width="@dimen/spotify_image_dimension_small"
+            android:layout_height="@dimen/spotify_image_dimension_small"
+            android:id="@+id/artist_thumbnail"
+            android:padding="@dimen/image_padding"
+            android:layout_gravity="center" />
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="@dimen/spotify_image_dimension_small"
+        android:id="@+id/artist_name"
+        android:layout_weight="7"
+        android:layout_gravity="center"
+        android:gravity="left|center_vertical"
+        android:singleLine="false"
+        android:textSize="@dimen/abc_list_item_padding_horizontal_material"
+        android:textAppearance="@style/Base.Widget.AppCompat.ListView"
+        android:background="@color/spotify_listview_bg"
+        android:layout_marginTop="@dimen/spotify_listview_margin"
+        android:layout_marginBottom="@dimen/spotify_listview_margin" />
+</LinearLayout>

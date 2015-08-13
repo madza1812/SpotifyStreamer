@@ -1,0 +1,116 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.example.android.danga.spotifystreamer.app.MusicPlayerFragment"
+    android:orientation="vertical"
+    android:background="@color/spotify_bg">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:id="@+id/ui_artist_name_textview"
+        android:layout_gravity="center"
+        android:textSize="@dimen/abc_list_item_padding_horizontal_material"
+        android:textAppearance="@style/Base.Widget.AppCompat.ListView"
+        android:gravity="center_vertical|center_horizontal" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:id="@+id/ui_album_name_textview"
+        android:textSize="@dimen/abc_list_item_padding_horizontal_material"
+        android:textAppearance="@style/Base.Widget.AppCompat.ListView"
+        android:layout_gravity="center" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="8"
+        android:id="@+id/ui_album_thumbnail_imageview"
+        android:layout_gravity="center"
+        android:padding="@dimen/image_padding" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:id="@+id/ui_track_name_textview"
+        android:textSize="@dimen/abc_list_item_padding_horizontal_material"
+        android:textAppearance="@style/Base.Widget.AppCompat.ListView"
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_gravity="center" />
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:id="@+id/ui_progress_seekbar"
+        style="@style/SeekBarAppTheme"/>
+
+    <!-- Timer Display-->
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="left"
+            android:id="@+id/ui_current_duartion_textview"
+            android:textAppearance="@style/Base.Widget.AppCompat.ListView"
+            android:textSize="@dimen/notification_subtext_size"/>
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="right"
+            android:id="@+id/ui_total_duration_textview"
+            android:textAppearance="@style/Base.Widget.AppCompat.ListView"
+            android:textSize="@dimen/notification_subtext_size" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:layout_gravity="center"
+        android:gravity="center_vertical|center_horizontal">
+
+        <ImageButton
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:id="@+id/ui_previous_button"
+            android:src="@drawable/ic_previous"
+            android:layout_marginLeft="@dimen/spotify_ui_button_padding"
+            android:layout_marginRight="@dimen/spotify_ui_button_inner_padding"
+            android:background="@color/spotify_button_bg"/>
+
+        <ImageButton
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:id="@+id/ui_play_pause_button"
+            android:src="@drawable/ic_play"
+            android:layout_marginLeft="@dimen/spotify_ui_button_inner_padding"
+            android:layout_marginRight="@dimen/spotify_ui_button_inner_padding"
+            android:background="@color/spotify_button_bg" />
+
+        <ImageButton
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:id="@+id/ui_next_button"
+            android:src="@drawable/ic_next"
+            android:layout_marginLeft="@dimen/spotify_ui_button_inner_padding"
+            android:layout_marginRight="@dimen/spotify_ui_button_padding"
+            android:background="@color/spotify_button_bg" />
+    </LinearLayout>
+</LinearLayout>
