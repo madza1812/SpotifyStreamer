@@ -41,11 +41,4 @@ public class Util {
 
         return ftBuilder.toString();
     }
-
-    public static ApplicationManager.ScreenRotation getScreenRotationType (boolean curLargeScreen, boolean newLargeScreen) {
-        if (newLargeScreen)
-            return curLargeScreen ? ApplicationManager.ScreenRotation.LarToLar : ApplicationManager.ScreenRotation.RegToLar;
-        else
-            return curLargeScreen ? ApplicationManager.ScreenRotation.LarToReg : ApplicationManager.ScreenRotation.RegToReg;
-    }
 }

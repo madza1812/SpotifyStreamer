@@ -56,13 +56,9 @@ public class ArtistTopTenFragment extends Fragment {
     private final String INTENT_ACTION_START_NEW_PLAYLIST = "new_playlist_start_action_intent";
 
     private final String MUSIC_PLAYER_FRAGMENT_POPUP_TAG = "player_ui_popup";
-    private final String MUSIC_PLAYER_FRAGMENT_FULLSCREEN_TAG = "player_ui_fullscreen";
-    private final String ARTIST_TOP_TEN_FRAGMENT_LARGE_SCREEN_TAG = "artist_top_ten_large_screen";
 
     private ApplicationManager appManager;
     private Display display;
-    private int currentOrientation;
-    private boolean curLargeScreen;
 
     private ArrayList<TrackParcel> topTenTracks;
     private String selectedArtistID;
@@ -78,8 +74,6 @@ public class ArtistTopTenFragment extends Fragment {
 
     private final int NULL_VALUE = 100;
 
-    private boolean RESTORE_TOPTEN = false;
-
     public ArtistTopTenFragment() {
     }
 
@@ -91,11 +85,6 @@ public class ArtistTopTenFragment extends Fragment {
 
         // Set activity position to check UI is shown before screen rotation.
         this.appManager = (ApplicationManager) getActivity().getApplication();
-
-        // Get Screen Orientation
-        display = ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        currentOrientation = display.getRotation();
-        curLargeScreen = isLargeWidth();
     }
 
     @Override
@@ -105,12 +94,9 @@ public class ArtistTopTenFragment extends Fragment {
         // Instantiate local variables
         final String ARGUMENT_ACTION_CLEAR_TOP_TEN = "top_ten_clear_action_argument";
         final String ARGUMENT_ACTION_GET_TOP_TEN = "top_ten_get_action_argument";
-        final String ARGUMENT_ACTION_RESTORE_TOP_TEN = "top_ten_restore_action_argument";
-        final String ARGUMENT_ACTION_LAUNCH_UI = "ui_launch_action_argument";
-        final String ARGUMENT_ACTION_LAUNCH_UI_ROTATION = "rotation_ui_launch_action_argument";
+        final String ARGUMENT_ACTION_WELCOME_TOP_TEN = "ton_ten_welcome_action_argument";
 
         final String INTENT_ACTION_GET_TOP_TEN = "top_ten_get_action_intent";
-        final String INTENT_ACTION_RESTORE_TOP_TEN = "top_ten_restore_action_intent";
 
         final String KEY_ARTIST_NAME_ID = "id_name_artist";
 
@@ -118,7 +104,7 @@ public class ArtistTopTenFragment extends Fragment {
         selectedTrackPos = NULL_VALUE;
 
         // Inflate the rootView
-        View rootView =  inflater.inflate(R.layout.fragment_artist_detail, container, false);
+        View rootView =  inflater.inflate(R.layout.fragment_artist_top_ten, container, false);
         ButterKnife.bind(this, rootView);
 
         // Initialize ViewStub
@@ -140,57 +126,34 @@ public class ArtistTopTenFragment extends Fragment {
         // Restoring with saved states from: either the screen is left (go to next activity)
         // or screen rotated
         if (savedInstanceState != null) {
-            Log.v(TAG, "Start restore screen rotation for ScreenRotationType: !" +
-                    appManager.getScreenRotation());
-
-            switch (appManager.getScreenRotation()) {
-                case RegToLar:
-                    // Because the Activity Search Handle the Large Screen Mode
-                    // This fragment is not used again after rotation.
-                    break;
-
-                case LarToReg:
-                    Log.v(TAG, "RESTORE STARTED for LarToReg !");
-                    topTenTracks = savedInstanceState.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
-                    if (topTenTracks != null){
-                        Log.v(TAG, "topTenTracks is NOT NULL !");
-                        if (topTenTracks.size() > 0) {
-                            mDetailAdapter.clear();
-                            mDetailAdapter.addAll(topTenTracks);
-                        } else
-                            noTrackStub.setVisibility(View.VISIBLE);
-                    }
-                    break;
-
-                // Handling the RegToReg and LarToLar
-                default:
-                    Log.v(TAG, "Restore from screen rotation for RegToReg or LarToLar !");
-                    topTenTracks = savedInstanceState.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
-                    if (topTenTracks != null){
-                        Log.v(TAG, "topTenTracks is NOT NULL !");
-                        if (topTenTracks.size() > 0) {
-                            mDetailAdapter.clear();
-                            mDetailAdapter.addAll(topTenTracks);
-                        } else
-                            noTrackStub.setVisibility(View.VISIBLE);
-                    } else {
-                        noTrackStub.setVisibility(View.VISIBLE);
-                    }
-                    break;
+            Log.v(TAG, "Restore from screen rotation for RegToReg or LarToLar !");
+            topTenTracks = savedInstanceState.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
+            if (topTenTracks != null){
+                Log.v(TAG, "topTenTracks is NOT NULL !");
+                if (topTenTracks.size() > 0) {
+                    mDetailAdapter.clear();
+                    mDetailAdapter.addAll(topTenTracks);
+                } else
+                    noTrackStub.setVisibility(View.VISIBLE);
+            } else {
+                welcomeDetailStub.setVisibility(View.VISIBLE);
             }
         }
 
         // Large Screen Mode
         if (isLargeWidth()) {
-
             Log.v(TAG, "Get Data from ARGUMENTS based on its action !");
-
             Bundle bundle = getArguments();
             if (bundle != null) {
                 Log.v(TAG, "ARGUMENT FOUND FOR TABLET MODE!");
                 String action = bundle.getString(KEY_ACTION);
                 if (action != null) {
                     switch (action) {
+
+                        case ARGUMENT_ACTION_WELCOME_TOP_TEN:
+                            Log.v(TAG, "LARGE SCREEN ACTION WELCOME TOP TEN !");
+                            welcomeDetailStub.setVisibility(View.VISIBLE);
+                            break;
 
                         case ARGUMENT_ACTION_GET_TOP_TEN:
                             Log.v(TAG, "LARGE SCREEN ACTION GET TOP TEN !");
@@ -203,35 +166,6 @@ public class ArtistTopTenFragment extends Fragment {
                             welcomeDetailStub.setVisibility(View.VISIBLE);
                             break;
 
-                        case ARGUMENT_ACTION_LAUNCH_UI_ROTATION:
-                            Log.v(TAG, "LARGE SCREEN ACTION LAUNCH MUSIC PLAYER UI !");
-                            topTenTracks = bundle.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
-                            selectedTrackPos = bundle.getInt(KEY_TRACK_POSITION, NULL_VALUE);
-                            RESTORE_TOPTEN = true;
-                            if (topTenTracks != null){
-                                Log.v(TAG, "topTenTracks is NOT NULL !");
-                                if (topTenTracks.size() > 0) {
-                                    mDetailAdapter.clear();
-                                    mDetailAdapter.addAll(topTenTracks);
-                                } else
-                                    noTrackStub.setVisibility(View.VISIBLE);
-                            }
-                            showDialog(selectedTrackPos, ARGUMENT_ACTION_LAUNCH_UI_ROTATION);
-                            break;
-
-                        case ARGUMENT_ACTION_RESTORE_TOP_TEN:
-                            Log.v(TAG, "LARGE SCREEN ACTION RESTORE TOP TEN !");
-                            topTenTracks = bundle.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
-                            RESTORE_TOPTEN = true;
-                            if (topTenTracks != null){
-                                Log.v(TAG, "topTenTracks is NOT NULL !");
-                                if (topTenTracks.size() > 0) {
-                                    mDetailAdapter.clear();
-                                    mDetailAdapter.addAll(topTenTracks);
-                                } else
-                                    noTrackStub.setVisibility(View.VISIBLE);
-                            }
-                            break;
                         default:
                             break;
                     }
@@ -248,26 +182,15 @@ public class ArtistTopTenFragment extends Fragment {
         Intent intent = getActivity().getIntent();
         if (intent != null && savedInstanceState == null) {
             Log.v(TAG, "Get Data from ARGUMENTS based on its action !");
-            if(INTENT_ACTION_RESTORE_TOP_TEN.equals(intent.getAction())) {
-                topTenTracks = intent.getParcelableArrayListExtra(KEY_TOP_TEN_TRACKS_LIST);
-                RESTORE_TOPTEN = true;
-                if (topTenTracks != null){
-                    Log.v(TAG, "topTenTracks is NOT NULL !");
-                    if (topTenTracks.size() > 0) {
-                        mDetailAdapter.clear();
-                        mDetailAdapter.addAll(topTenTracks);
-                    } else
-                        noTrackStub.setVisibility(View.VISIBLE);
-                }
-            } else if (INTENT_ACTION_GET_TOP_TEN.equals(intent.getAction())) {
+            if (INTENT_ACTION_GET_TOP_TEN.equals(intent.getAction())) {
                 artistNameId = intent.getStringArrayExtra(KEY_ARTIST_NAME_ID);
                 selectedArtistID = artistNameId[1];
             }
         }
 
         // Call the query in AsyncTask background when there is no saved from previous state.
-        if (!RESTORE_TOPTEN && (savedInstanceState == null ||
-                savedInstanceState.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST) == null)) {
+        if (savedInstanceState == null ||
+                savedInstanceState.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST) == null) {
 
             Log.v(TAG, "Execute the AsyncTask to get Top Ten Tracks using artist id !");
             if (selectedArtistID != null && !selectedArtistID.trim().isEmpty()) {
@@ -354,12 +277,6 @@ public class ArtistTopTenFragment extends Fragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        appManager.setActivityPosition(1);
-    }
-
-    @Override
     public void onDestroyView() {
         ButterKnife.unbind(this);
         super.onDestroyView();
@@ -368,39 +285,10 @@ public class ArtistTopTenFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         Log.v(TAG, "START onSaveInstanceState of ArtistTopTenFRAGMENT !");
-
-        final String KEY_SELECTED_TRACK_POS = "selected_track_pos";
-
-        // Get Screen Orientation
-        display = ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int newOrientation = display.getRotation();
-
-        ApplicationManager.ScreenRotation rotationType = Util.getScreenRotationType(
-                curLargeScreen,
-                isLargeWidth());
-
-        // Set screen rotation type
-        if (currentOrientation != newOrientation) {
-            appManager.setScreenRotation(rotationType);
-        }
-
-        switch (rotationType) {
-            case RegToLar:
-                outState.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, topTenTracks);
-                outState.putInt(KEY_SELECTED_TRACK_POS, selectedTrackPos);
-                appManager.setTopTenTracks(topTenTracks);
-                break;
-            case LarToReg:
-                // Pass TopTen Tracks to ArtistSearchActivity
-                outState.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, topTenTracks);
-                appManager.setTopTenTracks(topTenTracks);
-                break;
-            default:
-                outState.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, topTenTracks);
-                break;
-        }
+        outState.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, topTenTracks);
         super.onSaveInstanceState(outState);
     }
+
 
     @Override
     public void onDetach() {

@@ -17,16 +17,6 @@ public class ApplicationManager extends Application {
     private final String APPLICATION_START = "com.example.android.danga.spotifystreamer.app.ApplicationManager.APPLICATION_START";
     private final String LOG_TAG = ApplicationManager.class.getSimpleName();
     private AtomicInteger clientCount = new AtomicInteger();
-    private int activityPosition = 0; //Use to determine the activity for restore after rotation. 0:SEARCH, 1:TOPTEN, 2:PLAYER;
-    enum ScreenRotation {
-        RegToReg,
-        RegToLar,
-        LarToLar,
-        LarToReg
-    };
-    private ScreenRotation mScreenRotation;
-    private ArrayList<TrackParcel> topTenTracks;
-    private int trackPosition;
 
     public ApplicationManager getAppManager() {
         return appManager;
@@ -40,39 +30,6 @@ public class ApplicationManager extends Application {
         intentService.setAction(APPLICATION_START);
         Log.v(LOG_TAG, "Starting the PlayMusicService from Application Manager !");
         this.startService(intentService);
-    }
-
-    public int getTrackPosition() {
-        return trackPosition;
-    }
-
-    public void setTrackPosition(int trackPosition) {
-        this.trackPosition = trackPosition;
-    }
-
-    public ArrayList<TrackParcel> getTopTenTracks() {
-        return topTenTracks;
-    }
-
-    public void setTopTenTracks(ArrayList<TrackParcel> topTenTracks) {
-        this.topTenTracks = topTenTracks;
-    }
-
-    public ScreenRotation getScreenRotation() {
-        return mScreenRotation;
-    }
-
-    public void setScreenRotation(ScreenRotation mScreenRotation) {
-        this.mScreenRotation = mScreenRotation;
-    }
-
-    public int getActivityPosition() {
-        Log.v(LOG_TAG, "Activity POSITION = " + String.valueOf(activityPosition));
-        return activityPosition;
-    }
-
-    public void setActivityPosition(int activityPosition) {
-        this.activityPosition = activityPosition;
     }
 
     public void acquireBinding() {

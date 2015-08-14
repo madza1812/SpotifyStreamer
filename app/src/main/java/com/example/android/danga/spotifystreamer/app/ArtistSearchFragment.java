@@ -59,9 +59,6 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
     private final String INTENT_ACTION_GET_TOP_TEN = "top_ten_get_action_intent";
     private final String ARGUMENT_ACTION_CLEAR_TOP_TEN = "top_ten_clear_action_argument";
     private final String ARGUMENT_ACTION_GET_TOP_TEN = "top_ten_get_action_argument";
-    private final String ARGUMENT_ACTION_RESTORE_TOP_TEN = "top_ten_restore_action_argument";
-    private final String ARGUMENT_ACTION_LAUNCH_UI = "ui_launch_action_argument";
-    private final String ARGUMENT_ACTION_LAUNCH_UI_ROTATION = "rotation_ui_launch_action_argument";
     private final String ARGUMENT_ACTION_WELCOME_TOP_TEN = "ton_ten_welcome_action_argument";
 
     private final String ARTIST_TOP_TEN_FRAGMENT_LARGE_SCREEN_TAG = "artist_top_ten_large_screen";
@@ -84,11 +81,12 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
 
     private ApplicationManager appManager;
     private Display display;
-    private int currentOrientation;
-    private boolean uiToggle = false;
 
     private ArtistArrayAdapter<ArtistParcel> mArtistAdapter;
     private Intent detailIntent;
+
+
+    private ActivityCommunicator mActComm;
 
     // Butter Knife Binding Views
     @Bind(R.id.search_artist) SearchView searchView;
@@ -107,15 +105,6 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
         setHasOptionsMenu(true);
         // Initialize Application Manager
         this.appManager = (ApplicationManager) getActivity().getApplication();
-        // Check if Music Player UI was shown before screen rotation
-        if (appManager.getActivityPosition()==2) {
-            Log.v(TAG,"UI TOGGLE IS TRUE!");
-            uiToggle = true;
-        }
-
-        /*// Get Current Screen Orientation
-        display = ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        currentOrientation = display.getRotation();*/
     }
 
     @Override
@@ -142,31 +131,15 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
         // Restoring with saved states: either left the screen (go to next activity)
         // or screen rotated
         if (savedInstanceState != null) {
-            switch (appManager.getScreenRotation()) {
-                // Regular Screen to Large Screen
-                case RegToLar:
-                    Log.v(TAG, "Restore RegToLar !");
-                    recoverFromRegToLar(savedInstanceState);
-                    break;
-                // Large Screen To Regular Screen
-                case LarToReg:
-                    Log.v(TAG, "Restore LarToReg !");
-                    recoverFromLarToReg(savedInstanceState);
-                    break;
-                // Regular Screen To Regular Screen
-                case RegToReg:
-                    Log.v(TAG, "Restore RegToReg !");
-                    recoverFromRegToReg(savedInstanceState);
-                    break;
-                // Large Screen To Large Screen
-                default:
-                    Log.v(TAG,"Restore LarToLar !");
-                    recoverFromLarToLar(savedInstanceState);
-                    break;
-            }
+            Log.v(TAG, "Restore RegToReg !");
+            restoreFromScreenRotation(savedInstanceState);
         } else {
             // Initial, the Welcome ViewStub is VISIBLE when starting new activity
             welcomeStub.setVisibility(View.VISIBLE);
+            // Invoke ArtistTopTenFragment for Tablet Screen
+            if (isLargeWidth())
+                invokeTopTenFragmentLargeScreen(null, ARGUMENT_ACTION_WELCOME_TOP_TEN);
+
         }
 
         // Set Up the remaining View for the ArtistSearchFragment
@@ -276,10 +249,10 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
                     // Check connection before launch the intent to TopTenActivity
                     if (isNetworkAvailable()) {
                         if (isLargeWidth()) {
-                            // Load the Detail Fragment
+                            // Load the ArtistTopTenFragment
                             invokeTopTenFragmentLargeScreen(selArtist, ARGUMENT_ACTION_GET_TOP_TEN);
                         } else {
-                            // Launch the Detail Activity
+                            // Launch the ArtistTopTenActivity
                             detailIntent = new Intent(context, ArtistTopTenActivity.class);
                             detailIntent.setAction(INTENT_ACTION_GET_TOP_TEN)
                                     .putExtra(KEY_ARTIST_NAME_ID, nameAndId);
@@ -308,7 +281,13 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
         switch (action) {
 
             case ARGUMENT_ACTION_WELCOME_TOP_TEN:
-
+                Log.v(TAG, "Welcome Top Ten Track in Large Screen !");
+                mFragment = new ArtistTopTenFragment();
+                bundle.putString(KEY_ACTION, ARGUMENT_ACTION_WELCOME_TOP_TEN);
+                mFragment.setArguments(bundle);
+                ft.replace(R.id.detail_topten_container, mFragment)
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE)
+                        .commit();
                 break;
 
             case ARGUMENT_ACTION_GET_TOP_TEN:
@@ -340,76 +319,15 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
                         .commit();
                 break;
 
-            case ARGUMENT_ACTION_LAUNCH_UI:
-                Log.v(TAG, "Launch Music Player UI in Large Screen");
-                mFragment = new ArtistTopTenFragment();
-                bundle.putString(KEY_ACTION, ARGUMENT_ACTION_LAUNCH_UI);
-                bundle.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, appManager.getTopTenTracks());
-                mFragment.setArguments(bundle);
-                ft.replace(R.id.detail_topten_container, mFragment)
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE)
-                        .commit();
-                break;
-
-            case ARGUMENT_ACTION_RESTORE_TOP_TEN:
-                Log.v(TAG, "ACTION RESTORE TOPTEN !");
-                mFragment = new ArtistTopTenFragment();
-                bundle.putString(KEY_ACTION, ARGUMENT_ACTION_RESTORE_TOP_TEN);
-                bundle.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, appManager.getTopTenTracks());
-                mFragment.setArguments(bundle);
-                ft.replace(R.id.detail_topten_container, mFragment)
-                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE)
-                        .commit();
-                break;
-
             default:
                 break;
         }
     }
 
-    public void invokeTopTenAndMusicPlayerUIFragmentForLargeScreen(ArrayList<TrackParcel> playlist, int trackPos) {
-        Bundle bundle = new Bundle();
-        FragmentTransaction ft = getActivity().getFragmentManager().beginTransaction();
-        ArtistTopTenFragment mFragment = new ArtistTopTenFragment();
-        bundle.putString(KEY_ACTION, ARGUMENT_ACTION_LAUNCH_UI_ROTATION);
-        bundle.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, playlist);
-        bundle.putInt(KEY_TRACK_POSITION, trackPos);
-        mFragment.setArguments(bundle);
-        ft.replace(R.id.detail_topten_container, mFragment)
-                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE)
-                .commit();
-    }
-
-    public void recoverFromLarToReg (Bundle savedInstanceState) {
+    public void restoreFromScreenRotation(Bundle savedInstanceState) {
         listArtists = savedInstanceState.getParcelableArrayList(KEY_ARTISTS_LIST);
         savedQuery = savedInstanceState.getString(KEY_QUERY);
         recoverSearchArtist(listArtists, savedQuery);
-    }
-
-    public void recoverFromRegToReg (Bundle savedInstanceState) {
-        listArtists = savedInstanceState.getParcelableArrayList(KEY_ARTISTS_LIST);
-        savedQuery = savedInstanceState.getString(KEY_QUERY);
-        recoverSearchArtist(listArtists, savedQuery);
-    }
-
-    public void recoverFromRegToLar(Bundle savedInstanceState){
-        listArtists = savedInstanceState.getParcelableArrayList(KEY_ARTISTS_LIST);
-        savedQuery = savedInstanceState.getString(KEY_QUERY);
-        recoverSearchArtist(listArtists, savedQuery);
-        if (uiToggle) {
-            Log.v(TAG, "recoverREGTOLAR ! Launch PLAYER UI !");
-            invokeTopTenAndMusicPlayerUIFragmentForLargeScreen(appManager.getTopTenTracks(), appManager.getTrackPosition());
-        } else {
-            Log.v(TAG, "recoverREGTOLAR ! invoke DETAIL FRAGMENT WITH ACTION RESTORE TOPTEN !");
-            invokeTopTenFragmentLargeScreen(null, ARGUMENT_ACTION_RESTORE_TOP_TEN);
-        }
-    }
-
-    public void recoverFromLarToLar (Bundle savedInstanceState) {
-        listArtists = savedInstanceState.getParcelableArrayList(KEY_ARTISTS_LIST);
-        savedQuery = savedInstanceState.getString(KEY_QUERY);
-        recoverSearchArtist(listArtists, savedQuery);
-        invokeTopTenFragmentLargeScreen(null, ARGUMENT_ACTION_RESTORE_TOP_TEN);
     }
 
     public void recoverSearchArtist(ArrayList<ArtistParcel> artistParcels, String query) {
@@ -443,27 +361,18 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        if (activity instanceof ActivityCommunicator)
-            ((ArtistSearchActivity)activity).mFragComm = this;
-    }
+        if (activity instanceof ActivityCommunicator) {
+            // initialize FragmentCommunicator
+            ((ArtistSearchActivity) activity).mFragComm = this;
+            // initialize ActivityCommunicator
+            mActComm = (ArtistSearchActivity) activity;
+        }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        appManager.setActivityPosition(0);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         Log.v(TAG, "START onSaveInstanceState of ArtistSearchFRAGMENT !");
-        /*// Get Screen Orientation
-        display = ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int newOrientation = display.getRotation();
-        // End Testing
-        if (currentOrientation != newOrientation)
-            appManager.setScreenRotation(Util.getScreenRotationType(currentOrientation,
-                    newOrientation, isLargeWidth()));*/
-        // Save states of RegToReg and LarToLar
         outState.putParcelableArrayList(KEY_ARTISTS_LIST, listArtists);
         outState.putString(KEY_QUERY, savedQuery);
         super.onSaveInstanceState(outState);
@@ -473,17 +382,6 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
     public void onDestroyView() {
         ButterKnife.unbind(this);
         super.onDestroyView();
-    }
-
-    @Override
-    public void onDestroy() {
-        // Get Screen Orientation
-        display = ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int newOrientation = display.getRotation();
-        Log.v(TAG, "CURRENT ORIENTATION FROM ONDESTROY (FRAG): " + newOrientation);
-        Log.v(TAG, "SCREEN IS LARGE: " + String.valueOf(isLargeWidth()));
-        // End Testing
-        super.onDestroy();
     }
 
     private boolean isNetworkAvailable() {

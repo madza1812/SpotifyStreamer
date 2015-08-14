@@ -2,13 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/spotify_listview_bg">
+    android:background="@drawable/artist_selector">
 
     <FrameLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="3"
-        android:background="@color/spotify_listview_bg"
+        android:background="@drawable/artist_selector"
         android:layout_gravity="center"
         android:layout_marginTop="@dimen/spotify_listview_margin"
         android:layout_marginBottom="@dimen/spotify_listview_margin">
@@ -29,9 +29,9 @@
         android:layout_gravity="center"
         android:gravity="left|center_vertical"
         android:singleLine="false"
-        android:textSize="@dimen/abc_list_item_padding_horizontal_material"
+        android:textSize="@dimen/spotify_text_size_body_for_popup_ui"
         android:textAppearance="@style/Base.Widget.AppCompat.ListView"
-        android:background="@color/spotify_listview_bg"
+        android:background="@drawable/artist_selector"
         android:layout_marginTop="@dimen/spotify_listview_margin"
         android:layout_marginBottom="@dimen/spotify_listview_margin" />
 </LinearLayout>

@@ -10,5 +10,6 @@
     <color name="spotify_bg_status_bar">#E65100</color>
     <color name="spotify_text_body_color_light_on_dark">#FFFFFF</color>
     <color name="spotify_text_caption_color_light_on_dark">#F5F5F5</color>
+    <color name="spotify_listview_bg_tablet_mode_selected">#F57C00</color>
 
 </resources>

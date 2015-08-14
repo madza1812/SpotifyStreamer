@@ -2,13 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/spotify_listview_bg_tablet_mode"
+    android:background="@drawable/track_selector"
     android:padding="@dimen/spotify_listview_padding">
     <FrameLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="3"
-        android:background="@color/spotify_listview_bg_tablet_mode">
+        android:background="@drawable/track_selector">
 
         <ImageView
             android:layout_width="match_parent"
@@ -23,7 +23,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="7"
-        android:background="@color/spotify_listview_bg_tablet_mode"
+        android:background="@drawable/track_selector"
         android:layout_gravity="left|center_vertical"
         android:gravity="left|center_vertical">
 
@@ -33,7 +33,7 @@
             android:id="@+id/track_title_textview"
             android:singleLine="false"
             android:gravity="left|center_vertical"
-            android:textSize="@dimen/abc_list_item_padding_horizontal_material"
+            android:textSize="@dimen/spotify_text_size_body_for_popup_ui"
             android:textAppearance="@style/Base.Widget.AppCompat.ListView"
             android:layout_gravity="left|center_vertical" />
         <TextView
@@ -42,7 +42,7 @@
             android:id="@+id/album_title_textview"
             android:singleLine="false"
             android:gravity="left|center_vertical"
-            android:textSize="@dimen/abc_list_item_padding_horizontal_material"
+            android:textSize="@dimen/spotify_text_size_body_for_popup_ui"
             android:textAppearance="@style/Base.Widget.AppCompat.ListView"
             android:layout_gravity="left|center_vertical" />
 

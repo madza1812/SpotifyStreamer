@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -158,11 +159,8 @@ public class MusicPlayerFragment extends DialogFragment {
         final String KEY_ACTION = "action_argument";
 
         setHasOptionsMenu(true);
+
         this.appManager = (ApplicationManager) getActivity().getApplication();
-        // Get Screen Orientation
-        display = ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        currentOrientation = display.getRotation();
-        curLargeScreen = isLargeWidth();
 
         if (savedInstanceState == null) {
             // Processing intents from the Parent activity (ArtistTopTenActivity)
@@ -183,13 +181,6 @@ public class MusicPlayerFragment extends DialogFragment {
                         topTrackList = intent.getParcelableArrayListExtra(KEY_TOP_TEN_TRACKS_LIST);
                         trackPosition = intent.getIntExtra(KEY_TRACK_POSITION, NULL_VALUE);
                         startAndBindPlayMusicService(INTENT_ACTION_LAUNCH_UI, topTrackList, trackPosition);
-                        break;
-                    // Launch UI after rotation from LarToReg
-                    case INTENT_ACTION_LAUNCH_UI_ROTATION:
-                        Log.v(TAG, "INTENT_ACTION_LAUNCH_UI_ROTATION");
-                        topTrackList = intent.getParcelableArrayListExtra(KEY_TOP_TEN_TRACKS_LIST);
-                        trackPosition = intent.getIntExtra(KEY_TRACK_POSITION, NULL_VALUE);
-                        startAndBindPlayMusicService(INTENT_ACTION_LAUNCH_UI_ROTATION, topTrackList, trackPosition);
                         break;
                     default:
                         break;
@@ -212,12 +203,6 @@ public class MusicPlayerFragment extends DialogFragment {
                             topTrackList = bundle.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
                             trackPosition = bundle.getInt(KEY_TRACK_POSITION, NULL_VALUE);
                             startAndBindPlayMusicService(ARGUMENT_ACTION_LAUNCH_UI, topTrackList, trackPosition);
-                            break;
-                        case ARGUMENT_ACTION_LAUNCH_UI_ROTATION:
-                            Log.v(TAG, "ARGUMENT_ACTION_LAUNCH_UI_ROTATION");
-                            topTrackList = bundle.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
-                            trackPosition = bundle.getInt(KEY_TRACK_POSITION, NULL_VALUE);
-                            startAndBindPlayMusicService(ARGUMENT_ACTION_LAUNCH_UI_ROTATION, topTrackList, trackPosition);
                             break;
                         default:
                             break;
@@ -302,11 +287,6 @@ public class MusicPlayerFragment extends DialogFragment {
         // Inflate the layout
         rootView = inflater.inflate(R.layout.fragment_player_ui, container, false);
         ButterKnife.bind(this, rootView);
-        // Testing if this is the oldself-restarted fargment
-        TextView test = (TextView) rootView.findViewById(R.id.ui_large_dummy);
-        if (test != null ) {
-            Log.v(TAG, "OLD FRAGMENT is FOUND !");
-        }
 
         if (savedInstanceState != null) {
             topTrackList = savedInstanceState.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
@@ -340,32 +320,29 @@ public class MusicPlayerFragment extends DialogFragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        Log.v(TAG, "Fragment is attached to Activity: " + activity.toString());
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Log.v(TAG, "Activity is created ! Activity: " + this.getActivity().toString());
-    }
-
-    @Override
     public void onStart() {
-        Log.v(TAG, "Music Fragment is gonna created");
+        Log.v(TAG, "Music Fragment is gonna start");
         super.onStart();
+        Display display = getActivity().getWindowManager().getDefaultDisplay();
+        ViewGroup.LayoutParams params = getDialog().getWindow().getAttributes();
+        Point size = new Point();
+        boolean landscape =
+                (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         if (isLargeWidth()) {
-            Display display = getActivity().getWindowManager().getDefaultDisplay();
-            Point size = new Point();
-            display.getSize(size);
-            ViewGroup.LayoutParams params = getDialog().getWindow().getAttributes();
-            params.width = (int)(size.x * 0.7f);
-            params.height = (int) (size.y*0.8f);
-            Log.v(TAG, "Params Width: " +params.width);
-            Log.v(TAG, "Params Height: " + params.height);
-            getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
+            if (landscape) {
+                display.getSize(size);
+                params.width = (int) (size.x * 0.7f);
+                params.height = (int) (size.y * 0.8f);
+                getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
+            } else {
+                display.getSize(size);
+                params.width = size.x;
+                params.height = (int) (size.y * 0.7f);
+                getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
+            }
         }
+        Log.v(TAG, "Params Width: " + params.width);
+        Log.v(TAG, "Params Height: " + params.height);
     }
 
     @Override
@@ -377,20 +354,8 @@ public class MusicPlayerFragment extends DialogFragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         Log.v(TAG, "START onSaveInstanceState of PlayerFRAGMENT !");
-        // Get Screen Orientation
-        display = ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int newOrientation = display.getRotation();
-
-        // End Testing
-        ApplicationManager.ScreenRotation rotationType = Util.getScreenRotationType(curLargeScreen, isLargeWidth());
-        if (currentOrientation != newOrientation)
-            appManager.setScreenRotation(rotationType);
-        outState.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, topTrackList);
-        outState.putInt(KEY_TRACK_POSITION, trackPosition);
-        if (rotationType == ApplicationManager.ScreenRotation.RegToLar) {
-            appManager.setTrackPosition(playMusicSrv.getCurrentTrack());
-            appManager.setTopTenTracks(playMusicSrv.getPlayingList());
-        }
+        outState.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, playMusicSrv.getPlayingList());
+        outState.putInt(KEY_TRACK_POSITION, playMusicSrv.getCurrentTrack());
 
         super.onSaveInstanceState(outState);
     }
@@ -562,16 +527,6 @@ public class MusicPlayerFragment extends DialogFragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        appManager.setActivityPosition(2);
-        if (this == getFragmentManager().findFragmentByTag("player_ui_popup"))
-            Log.v(TAG, "Music Player Fragment Dialog Pop Up !");
-        else
-            Log.v(TAG, "Music Player Fragment Dialog Full Screen !");
-    }
-
-    @Override
     public void onDestroy() {
         if(mHandler != null) {
             mHandler.removeCallbacks(mRunnable);
@@ -586,12 +541,6 @@ public class MusicPlayerFragment extends DialogFragment {
         this.appManager.releaseBinding();
         remoteLaunch = false;
         super.onDestroy();
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        Log.v(TAG, "Detaching the MUSICPLAYERFRAGMENT with its activity !");
     }
 
     class IncomingHandler implements Handler.Callback {

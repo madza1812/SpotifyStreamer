@@ -36,16 +36,10 @@ public class ArtistTopTenActivity extends AppCompatActivity{
     private final String KEY_ARTIST_NAME_ID = "id_name_artist";
 
     private final String MUSIC_PLAYER_FRAGMENT_POPUP_TAG = "player_ui_popup";
-    private final String MUSIC_PLAYER_FRAGMENT_FULLSCREEN_TAG = "player_ui_fullscreen";
-    private final String ARTIST_TOP_TEN_FRAGMENT_LARGE_SCREEN_TAG = "artist_top_ten_large_screen";
 
     private final int MENU_ACTION_LAUNCH_UI = 100;
-    private final int NULL_VALUE = 100;
 
     private ApplicationManager appManager;
-    private Display display;
-    private int currentOrientation;
-    private boolean curLargeScreen;
 
     private PlayMusicService playMusicSrv;
     private static boolean srvBound = false;
@@ -73,31 +67,9 @@ public class ArtistTopTenActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
 
         Log.v(TAG, "onCREATE");
-        // Begin Fragment Testing
-        FragmentManager fm = getFragmentManager();
-        Log.v(TAG, "Number of entries in backstack: " + fm.getBackStackEntryCount());
-        if (isLargeWidth()) {
-            ArtistSearchFragment asf = (ArtistSearchFragment) fm.findFragmentById(R.id.artist_search_fragment);
-            ArtistTopTenFragment attf = (ArtistTopTenFragment) fm.findFragmentByTag(ARTIST_TOP_TEN_FRAGMENT_LARGE_SCREEN_TAG);
-            MusicPlayerFragment mpf = (MusicPlayerFragment) fm.findFragmentByTag(MUSIC_PLAYER_FRAGMENT_POPUP_TAG);
-            Log.v(TAG, "ArtistSearchFragment == NULL is : " + String.valueOf(asf == null));
-            Log.v(TAG, "ArtistTopTenFragment == NULL is : " + String.valueOf(attf == null));
-            Log.v(TAG, "MusicPlayerFragment == NULL is : " + String.valueOf( mpf == null));
-        } else {
-            ArtistSearchFragment asf = (ArtistSearchFragment) fm.findFragmentById(R.id.artist_search_fragment);
-            ArtistTopTenFragment attf = (ArtistTopTenFragment) fm.findFragmentById(R.id.artist_detail_fragment);
-            MusicPlayerFragment mpf = (MusicPlayerFragment) fm.findFragmentByTag(MUSIC_PLAYER_FRAGMENT_FULLSCREEN_TAG);
-            Log.v(TAG, "ArtistSearchFragment == NULL is : " + String.valueOf(asf == null));
-            Log.v(TAG, "ArtistTopTenFragment == NULL is : " + String.valueOf(attf == null));
-            Log.v(TAG, "MusicPlayerFragment == NULL is : " + String.valueOf( mpf == null));
-        }
-        // End Fragment Testing
 
         // Start bindingPlayMusicService and report to Application Manager
         this.appManager = (ApplicationManager) getApplication();
-        display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        currentOrientation = display.getRotation();
-        curLargeScreen = isLargeWidth();
         Log.v(TAG, "onCREATE srvBound is " + String.valueOf(srvBound));
         if (isLargeWidth()) {
             finish();
@@ -144,53 +116,18 @@ public class ArtistTopTenActivity extends AppCompatActivity{
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         Log.v(TAG, "START onSaveInstanceState of ArtistTopTenActivity !");
-        // Get Screen Orientation
-        display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int newOrientation = display.getRotation();
-        // End Testing
-        if (currentOrientation != newOrientation)
-            appManager.setScreenRotation(Util.getScreenRotationType(curLargeScreen, isLargeWidth()));
-
-        // Begin Fragment Testing
-        FragmentManager fm = getFragmentManager();
-        Log.v(TAG, "Number of entries in backstack: " + fm.getBackStackEntryCount());
-        if (isLargeWidth()) {
-            ArtistSearchFragment asf = (ArtistSearchFragment) fm.findFragmentById(R.id.artist_search_fragment);
-            ArtistTopTenFragment attf = (ArtistTopTenFragment) fm.findFragmentByTag(ARTIST_TOP_TEN_FRAGMENT_LARGE_SCREEN_TAG);
-            MusicPlayerFragment mpf = (MusicPlayerFragment) fm.findFragmentByTag(MUSIC_PLAYER_FRAGMENT_POPUP_TAG);
-            Log.v(TAG, "ArtistSearchFragment == NULL is : " + String.valueOf(asf == null));
-            Log.v(TAG, "ArtistTopTenFragment == NULL is : " + String.valueOf(attf == null));
-            Log.v(TAG, "MusicPlayerFragment == NULL is : " + String.valueOf( mpf==null));
-        } else {
-            ArtistSearchFragment asf = (ArtistSearchFragment) fm.findFragmentById(R.id.artist_search_fragment);
-            ArtistTopTenFragment attf = (ArtistTopTenFragment) fm.findFragmentById(R.id.artist_detail_fragment);
-            MusicPlayerFragment mpf = (MusicPlayerFragment) fm.findFragmentByTag(MUSIC_PLAYER_FRAGMENT_FULLSCREEN_TAG);
-            Log.v(TAG, "ArtistSearchFragment == NULL is : " + String.valueOf(asf == null));
-            Log.v(TAG, "ArtistTopTenFragment == NULL is : " + String.valueOf(attf == null));
-            Log.v(TAG, "MusicPlayerFragment == NULL is : " + String.valueOf( mpf==null));
-        }
-        // End Fragment Testing
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (isFinishing())
-            appManager.setTopTenTracks(null);
         Log.v(TAG, "onDESTROY srvBound is " + String.valueOf(srvBound));
-        display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int newOrientation = display.getRotation();
-        ApplicationManager.ScreenRotation rotationTye =
-                Util.getScreenRotationType(curLargeScreen, isLargeWidth());
-        if (rotationTye == ApplicationManager.ScreenRotation.RegToLar
-                || rotationTye == ApplicationManager.ScreenRotation.RegToReg) {
-            Log.v(TAG, "onDESTROY UNBINDING THE SERVICE FOR ARTIST TOP TEN ACTIVITY !");
-            // Unbinding the PlayMusicService
-            this.unbindService(mServiceConnection);
-            this.appManager.releaseBinding();
-            srvBound = false;
-        }
+        Log.v(TAG, "onDESTROY UNBINDING THE SERVICE FOR ARTIST TOP TEN ACTIVITY !");
+        // Unbinding the PlayMusicService
+        this.unbindService(mServiceConnection);
+        this.appManager.releaseBinding();
+        srvBound = false;
     }
 
     @Override
