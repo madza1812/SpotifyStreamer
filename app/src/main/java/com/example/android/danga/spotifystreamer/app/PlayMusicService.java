@@ -44,15 +44,19 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
     private final String ACTION_NEXT_MP = "com.example.android.danga.spotifystreamer.app.NEXT";
     private final String ACTION_LAUNCH_UI = "com.example.android.danga.spotifystreamer.app.LAUNCH_UI";
     private final String INTENT_ACTION_LAUNCH_UI = "ui_launch_action_intent";
+    private final String ACTION_LAUNCH_POP_UP_UI = "ui_pop_up_launch_action";
 
     private final static String KEY_TOP_TEN_TRACKS_LIST = "list_tracks_top_ten";
     private final static String KEY_TRACK_POSITION = "track_position";
     private final static String KEY_MESSENGER = "messenger";
+    private final String KEY_ASA_MESSENGER = "messenger_asa";
 
     private final int MSG_PLAY = 0;
     private final int MSG_PAUSE = 1;
     private final int MSG_NEXT = 2;
     private final int MSG_PREVIOUS = 3;
+
+    private final int MSG_LAUNCH_POP_UP_UI = 4;
 
     private final String NOTIF_ICON_PLAY = "Play";
     private final String NOTIF_ICON_PAUSE = "Pause";
@@ -68,6 +72,7 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
     private static ArrayList<TrackParcel> topTrackList = null; // current playlist
 
     private Messenger uiMessenger = null;
+    private Messenger asaMessenger = null;
 
     private StartSendNotification startSendNotification;
     private String[] notificationParams = new String[4]; // in format [albumUrl, Pause/Play, Ongoing,start or update]
@@ -500,12 +505,28 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
         return (activeNetwork != null && activeNetwork.isConnectedOrConnecting());
     }
 
+    private boolean isLargeWidth(){
+        return getResources().getBoolean(R.bool.large_screen);
+    }
+
     public void updateToUIFromMP(int action) {
         Log.v(TAG, "update UI through uiMessenger = " + uiMessenger.toString());
         Message msg = new Message();
         msg.what = action;
         try {
             uiMessenger.send(msg);
+        } catch (RemoteException e) {
+            Log.e(TAG, "Messenger Error !");
+            e.printStackTrace();
+        }
+        Log.v(TAG, "Message is sent !");
+    }
+
+    public void updateToASActivity (int action) {
+        Message msg = new Message();
+        msg.what = action;
+        try {
+            asaMessenger.send(msg);
         } catch (RemoteException e) {
             Log.e(TAG, "Messenger Error !");
             e.printStackTrace();
@@ -589,11 +610,14 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
             Log.v(LOG_TAG, context.getPackageName());
 
             // Setup Intents
-            Intent notifIntent = new Intent(context, MusicPlayerActivity.class);
-            //Intent notifIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+            Intent notifIntent;
+            Log.v(TAG, "Build Notification Intent For REGULAR screen !");
+            notifIntent = new Intent(context, MusicPlayerActivity.class);
             notifIntent.setAction(INTENT_ACTION_LAUNCH_UI);
             notifIntent.putParcelableArrayListExtra(KEY_TOP_TEN_TRACKS_LIST, topTrackList)
                     .putExtra(KEY_TRACK_POSITION, curTrackPos);
+
+            //Intent notifIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
             PendingIntent pNotifIntent = PendingIntent.getActivity(context, REQUEST_CODE_NOTIF,
                     notifIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 

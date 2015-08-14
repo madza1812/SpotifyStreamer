@@ -10,7 +10,10 @@ import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.NavUtils;
 import android.os.Bundle;
@@ -20,6 +23,9 @@ import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.ImageButton;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
@@ -36,6 +42,9 @@ public class ArtistSearchActivity extends AppCompatActivity implements ActivityC
     private final String KEY_TOP_TEN_TRACKS_LIST = "list_tracks_top_ten";
     private final String KEY_TRACK_POSITION = "track_position";
     private final String KEY_ACTION = "action_argument";
+    private final String KEY_ASA_MESSENGER = "messenger_asa";
+
+    private final int MSG_LAUNCH_POP_UP_UI = 4;
 
     private final String MUSIC_PLAYER_FRAGMENT_POPUP_TAG = "player_ui_popup";
 
