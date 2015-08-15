@@ -1,0 +1,27 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:seekBarStyle">@style/SeekBarAppTheme</item>
+        <item name="android:actionBarStyle">@style/SpotifyActionBar</item>
+    </style>
+
+    <style name="SeekBarAppTheme" parent="android:Widget.SeekBar">
+        <item name="android:progressDrawable">@drawable/apptheme_scrubber_progress_horizontal_holo_light</item>
+        <item name="android:indeterminateDrawable">@drawable/apptheme_scrubber_progress_horizontal_holo_light</item>
+        <item name="android:minHeight">13dip</item>
+        <item name="android:maxHeight">4000dip</item>
+        <item name="android:thumb">@drawable/apptheme_scrubber_control_selector_holo_light</item>
+        <item name="android:thumbOffset">16dip</item>
+        <item name="android:paddingLeft">16dip</item>
+        <item name="android:paddingRight">16dip</item>
+    </style>
+
+    <style name="SpotifyActionBar" parent="@android:style/Widget.Holo.Light.ActionBar.Solid">
+        <item name="android:background">@color/spotify_actionbar_bg</item>
+    </style>
+
+    <style name="ActionBarPopupThemeOverlay" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowActionBar">false</item>
+    </style>
+</resources>

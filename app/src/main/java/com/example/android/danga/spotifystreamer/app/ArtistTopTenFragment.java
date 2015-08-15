@@ -215,6 +215,21 @@ public class ArtistTopTenFragment extends Fragment {
                         if (isLargeWidth()) {
                             // Show DialogFragment for Player_UI
                             showDialog(position, ARGUMENT_ACTION_START_NEW_PLAYLIST);
+                            /*// Launch The Player Activity for Selected Track
+                            topTrackIntent = new Intent(context, MusicPlayerActivity.class)
+                                    .setAction(INTENT_ACTION_START_NEW_PLAYLIST)
+                                    .putParcelableArrayListExtra(KEY_TOP_TEN_TRACKS_LIST, topTenTracks)
+                                    .putExtra(KEY_TRACK_POSITION, position);
+                            if (topTrackIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                                if (Build.VERSION.SDK_INT >= 16) {
+                                    startActivity(topTrackIntent,
+                                            ActivityOptions.makeCustomAnimation(getActivity(),
+                                                    R.animator.enter,
+                                                    R.animator.exit).toBundle());
+                                } else {
+                                    startActivity(topTrackIntent);
+                                }
+                            }*/
                             selectedTrackPos = position;
                         }
                         else {
@@ -223,8 +238,8 @@ public class ArtistTopTenFragment extends Fragment {
                                     .setAction(INTENT_ACTION_START_NEW_PLAYLIST)
                                     .putParcelableArrayListExtra(KEY_TOP_TEN_TRACKS_LIST, topTenTracks)
                                     .putExtra(KEY_TRACK_POSITION, position);
-                            if (topTrackIntent.resolveActivity(getActivity().getPackageManager()) != null)
-                                if (Build.VERSION.SDK_INT >=16) {
+                            if (topTrackIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                                if (Build.VERSION.SDK_INT >= 16) {
                                     startActivity(topTrackIntent,
                                             ActivityOptions.makeCustomAnimation(getActivity(),
                                                     R.animator.enter,
@@ -232,6 +247,7 @@ public class ArtistTopTenFragment extends Fragment {
                                 } else {
                                     startActivity(topTrackIntent);
                                 }
+                            }
                         }
                     } else { // LOST CONNECTION
                         Util.displayToast(context, "Connection Lost!");

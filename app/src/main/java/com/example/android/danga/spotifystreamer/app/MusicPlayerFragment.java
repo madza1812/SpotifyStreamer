@@ -1,8 +1,6 @@
 package com.example.android.danga.spotifystreamer.app;
 
-import android.app.Activity;
 import android.app.Dialog;
-import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -11,7 +9,6 @@ import android.content.res.Configuration;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.nfc.Tag;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -20,7 +17,10 @@ import android.app.DialogFragment;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.ShareActionProvider;
+import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -31,7 +31,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -79,9 +78,6 @@ public class MusicPlayerFragment extends DialogFragment {
     private int trackPosition;
 
     private ApplicationManager appManager;
-    private Display display;
-    private int currentOrientation;
-    private boolean curLargeScreen;
 
     private View rootView;
     private PlayMusicService playMusicSrv;
@@ -90,10 +86,7 @@ public class MusicPlayerFragment extends DialogFragment {
     private static Handler mHandler = new Handler();
     private Runnable mRunnable;
 
-    private boolean rotationLaunch = false;
     private static boolean srvBound = false;
-    private boolean remoteLaunch = false;
-
     private final int NULL_VALUE = 100;
 
 
@@ -283,10 +276,51 @@ public class MusicPlayerFragment extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.v(TAG, "inside onCreateView ! PlayMusicService is NULL: " + String.valueOf(playMusicSrv==null));
+        Log.v(TAG, "inside onCreateView ! PlayMusicService is NULL: " + String.valueOf(playMusicSrv == null));
         // Inflate the layout
         rootView = inflater.inflate(R.layout.fragment_player_ui, container, false);
         ButterKnife.bind(this, rootView);
+
+        // Setup Like-ActionBar
+        Toolbar popupActionBar = (Toolbar)rootView.findViewById(R.id.toolbar);
+        //((AppCompatActivity) getActivity()).setSupportActionBar(popupActionBar);
+        popupActionBar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
+
+        ImageButton upButton = (ImageButton) popupActionBar.findViewById(R.id.upButton);
+        upButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
+
+        popupActionBar.inflateMenu(R.menu.menu_player);
+        popupActionBar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.home:
+                        dismiss();
+                        getActivity().finish();
+                        break;
+                    case R.id.action_share:
+                        ShareActionProvider mShareActionProvider;
+                        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+                        if (mShareActionProvider != null) {
+                            mShareActionProvider.setShareIntent(doShare());
+                        } else
+                            Log.v(TAG, "Share Action Provider is null !");
+                        break;
+                }
+                return true;
+            }
+        });
+        // End setup Like-ActionBar
 
         if (savedInstanceState != null) {
             topTrackList = savedInstanceState.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
@@ -313,7 +347,7 @@ public class MusicPlayerFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         if (!isLargeWidth()) {
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
             dialog.setCanceledOnTouchOutside(true);
         }
         return dialog;
@@ -333,13 +367,12 @@ public class MusicPlayerFragment extends DialogFragment {
                 display.getSize(size);
                 params.width = (int) (size.x * 0.7f);
                 params.height = (int) (size.y * 0.8f);
-                getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
             } else {
                 display.getSize(size);
                 params.width = size.x;
                 params.height = (int) (size.y * 0.7f);
-                getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
             }
+            getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
         }
         Log.v(TAG, "Params Width: " + params.width);
         Log.v(TAG, "Params Height: " + params.height);
@@ -440,6 +473,15 @@ public class MusicPlayerFragment extends DialogFragment {
                 (getResources().getDimension(R.dimen.activity_horizontal_margin)*4));
         int imSizeInPx = (int) (imInDp * displayMetrics.densityDpi / 160f);
 
+        // Setup the Like-ActionBar for popup Media Player UI
+        Toolbar popUpActionBar = (Toolbar) rootView.findViewById(R.id.toolbar);
+        popUpActionBar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
         artistName.setText(topTrackList.get(trackPosition).getArtistNames());
         albumName.setText(topTrackList.get(trackPosition).getAlbumName());
 
@@ -539,7 +581,6 @@ public class MusicPlayerFragment extends DialogFragment {
             srvBound = false;
         }
         this.appManager.releaseBinding();
-        remoteLaunch = false;
         super.onDestroy();
     }
 

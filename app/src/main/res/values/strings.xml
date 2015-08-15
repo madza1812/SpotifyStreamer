@@ -19,4 +19,5 @@
     <string name="pref_country_label">Preferred Market</string>
     <string name="pref_country_key">country</string>
     <string name="pref_country_default">Current Location</string>
+    <string name="title_activity_pop_up_ui">Spotify Streamer</string>
 </resources>
