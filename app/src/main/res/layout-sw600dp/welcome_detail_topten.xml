@@ -10,8 +10,8 @@
         android:id="@+id/top_ten_imageview"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="50dp"
-        android:background="@color/spotify_bg"
-        android:src="@drawable/ic_top10"/>
+        android:background="@color/spotify_br_color_tablet_mode"
+        android:src="@drawable/ic_top10_trans"/>
 
     <TextView
         android:layout_width="wrap_content"
