@@ -15,7 +15,7 @@
         android:layout_weight="1"
         android:id="@+id/ui_artist_name_textview"
         android:layout_gravity="center"
-        android:textSize="@dimen/spotify_text_size_body_for_popup_ui"
+        android:textSize="@dimen/spotify_text_size_subtext_for_popup_ui"
         android:textAppearance="@style/Base.Widget.AppCompat.ListView"
         android:gravity="center_vertical|center_horizontal" />
 
@@ -24,7 +24,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:id="@+id/ui_album_name_textview"
-        android:textSize="@dimen/spotify_text_size_body_for_popup_ui"
+        android:textSize="@dimen/spotify_text_size_subtext_for_popup_ui"
         android:textAppearance="@style/Base.Widget.AppCompat.ListView"
         android:layout_gravity="center" />
 
@@ -41,7 +41,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:id="@+id/ui_track_name_textview"
-        android:textSize="@dimen/spotify_text_size_body_for_popup_ui"
+        android:textSize="@dimen/spotify_text_size_subtext_for_popup_ui"
         android:textAppearance="@style/Base.Widget.AppCompat.ListView"
         android:gravity="center_vertical|center_horizontal"
         android:layout_gravity="center" />

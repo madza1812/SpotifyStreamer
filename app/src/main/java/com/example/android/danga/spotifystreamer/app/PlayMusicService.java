@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -19,6 +20,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.PowerManager;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
@@ -34,7 +36,7 @@ import java.util.ArrayList;
  * Created by An on 6/30/2015.
  */
 public class PlayMusicService extends Service implements MediaPlayer.OnPreparedListener,
-        MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, MediaController.MediaPlayerControl, AudioManager.OnAudioFocusChangeListener {
+        MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener {
 
     public final String TAG = PlayMusicService.class.getSimpleName();
 
@@ -44,19 +46,16 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
     private final String ACTION_NEXT_MP = "com.example.android.danga.spotifystreamer.app.NEXT";
     private final String ACTION_LAUNCH_UI = "com.example.android.danga.spotifystreamer.app.LAUNCH_UI";
     private final String INTENT_ACTION_LAUNCH_UI = "ui_launch_action_intent";
-    private final String ACTION_LAUNCH_POP_UP_UI = "ui_pop_up_launch_action";
 
     private final static String KEY_TOP_TEN_TRACKS_LIST = "list_tracks_top_ten";
     private final static String KEY_TRACK_POSITION = "track_position";
     private final static String KEY_MESSENGER = "messenger";
-    private final String KEY_ASA_MESSENGER = "messenger_asa";
 
     private final int MSG_PLAY = 0;
     private final int MSG_PAUSE = 1;
     private final int MSG_NEXT = 2;
     private final int MSG_PREVIOUS = 3;
 
-    private final int MSG_LAUNCH_POP_UP_UI = 4;
 
     private final String NOTIF_ICON_PLAY = "Play";
     private final String NOTIF_ICON_PAUSE = "Pause";
@@ -66,13 +65,11 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
     private final String NOTIF_UPDATE = "update";
 
     private static MediaPlayer mMediaPlayer = null; // current MP
-    private static MediaController mMediaController = null;
     private AudioManager mAudioManager;
     private static int curTrackPos; // current track
     private static ArrayList<TrackParcel> topTrackList = null; // current playlist
 
     private Messenger uiMessenger = null;
-    private Messenger asaMessenger = null;
 
     private StartSendNotification startSendNotification;
     private String[] notificationParams = new String[4]; // in format [albumUrl, Pause/Play, Ongoing,start or update]
@@ -82,6 +79,9 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
     private final int NULL_VALUE = 100;
 
     private static boolean foregroundMode = false;
+    private static boolean notificationEnable = true;
+    private Notification notifPlayMusic;
+    private NotificationManager mNotificationManager;
 
     // Media Player States
     enum State {
@@ -201,20 +201,6 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
             mMediaPlayer.setVolume(50, 50);
-            // Initialize the MediaController
-            mMediaController = new MediaController(this, false);
-            mMediaController.setPrevNextListeners(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    nextMusic();
-                }
-            }, new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    previousMusic();
-                }
-            });
-            mMediaController.hide();
         }
     }
 
@@ -232,8 +218,15 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
 
     public void initializeMP(String url) {
         try {
-            mMediaPlayer.setDataSource(url);
-            mState = State.Initialized;
+             if(isNetworkAvailable()) {
+                 mMediaPlayer.setDataSource(url);
+                 mState = State.Initialized;
+             } else {
+                 Log.v(TAG, "Lost Connection !");
+                 Util.displayToast(getApplicationContext(), "Lost Connection !");
+                 mMediaPlayer.reset();
+                 mState = State.Idle;
+             }
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "IllegalArgumentException for setDataSrouce: " + e.getMessage());
             e.printStackTrace();
@@ -285,33 +278,56 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
     }
 
     public void resumeMusic() {
-        if (!mMediaPlayer.isPlaying()) {
-            mMediaPlayer.seekTo(currentScrubPosition);
-            mMediaPlayer.start();
-            mState = State.Started;
-            updateToUIFromMP(MSG_PLAY);
+        if (isNetworkAvailable()) {
+            if (!mMediaPlayer.isPlaying()) {
+                mMediaPlayer.seekTo(currentScrubPosition);
+                mMediaPlayer.start();
+                mState = State.Started;
+                updateToUIFromMP(MSG_PLAY);
 
-            // Update foregroundMode
-            notificationParams = new String[] {topTrackList.get(curTrackPos).getAlbumThumbnailUrl(),NOTIF_ICON_PAUSE, NOTIF_UPDATE};
-            startSendNotification = new StartSendNotification(getApplicationContext());
-            startSendNotification.execute(notificationParams);
+                // Update foregroundMode
+                notificationParams = new String[]{topTrackList.get(curTrackPos).getAlbumThumbnailUrl(), NOTIF_ICON_PAUSE, NOTIF_UPDATE};
+                startSendNotification = new StartSendNotification(getApplicationContext());
+                startSendNotification.execute(notificationParams);
+            }
+        } else {
+            if (foregroundMode) {
+                stopForeground(true);
+                foregroundMode = false;
+            }
         }
     }
 
     public void nextMusic() {
-        curTrackPos++;
-        if (curTrackPos == topTrackList.size())
-            curTrackPos = 0;
-        startPlayingMusic();
-        updateToUIFromMP(MSG_NEXT);
+        if (isNetworkAvailable()) {
+            curTrackPos++;
+            if (curTrackPos == topTrackList.size())
+                curTrackPos = 0;
+            startPlayingMusic();
+            updateToUIFromMP(MSG_NEXT);
+        } else {
+            Util.displayToast(getApplicationContext(), "Lost Connection !");
+            if (foregroundMode) {
+                stopForeground(true);
+                foregroundMode = false;
+            }
+        }
     }
 
     public void previousMusic() {
-        curTrackPos--;
-        if (curTrackPos < 0)
-            curTrackPos = topTrackList.size() - 1;
-        startPlayingMusic();
-        updateToUIFromMP(MSG_PREVIOUS);
+        if (isNetworkAvailable()) {
+            curTrackPos--;
+            if (curTrackPos < 0)
+                curTrackPos = topTrackList.size() - 1;
+            startPlayingMusic();
+            updateToUIFromMP(MSG_PREVIOUS);
+        } else {
+            Util.displayToast(getApplicationContext(), "Lost Connection !");
+            if (foregroundMode) {
+                stopForeground(true);
+                foregroundMode = false;
+            }
+        }
     }
 
     public void seekTo(int progress) {
@@ -339,64 +355,8 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
         }
     }
 
-    // MediaController override methods:
-    @Override
-    public void start() {
-        startPlayingMusic();
-    }
-
-    @Override
-    public void pause() {
-
-    }
-
-    @Override
-    public int getDuration() {
-        return 0;
-    }
-
-    @Override
-    public int getCurrentPosition() {
-        return 0;
-    }
-    @Override
-    public boolean isPlaying() {
-        return false;
-    }
-
-    @Override
-    public int getBufferPercentage() {
-        return 0;
-    }
-
-    @Override
-    public boolean canPause() {
-        return false;
-    }
-
-    @Override
-    public boolean canSeekBackward() {
-        return false;
-    }
-
-    @Override
-    public boolean canSeekForward() {
-        return false;
-    }
-
-    @Override
-    public int getAudioSessionId() {
-        return 0;
-    }
-
-    // End MediaController override methods
-
     public MediaPlayer getMediaPlayer() {
         return mMediaPlayer;
-    }
-
-    public MediaController getMediaController() {
-        return mMediaController;
     }
 
     public State getMPState() {
@@ -411,14 +371,18 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
         return curTrackPos;
     }
 
-    public boolean isForegroundMode() {
-        return foregroundMode;
-    }
-
     @Override
     public void onCompletion(MediaPlayer mp) {
-        // Play the next track on the playlist
-        nextMusic();
+        if (isNetworkAvailable()) {
+            // Play the next track on the playlist
+            nextMusic();
+        } else {
+            Util.displayToast(getApplicationContext(), "Lost Connection !");
+            if (foregroundMode) {
+                stopForeground(true);
+                foregroundMode = false;
+            }
+        }
     }
 
     @Override
@@ -473,28 +437,44 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        mMediaController.setMediaPlayer(this);
         // Start playing the track
         mp.start();
         mState = State.Started;
         Log.v(TAG, "onPrepared: Music is started !");
         // Send message to Activity
         updateToUIFromMP(MSG_PLAY);
-        // Update foregroundMode
-        if (!foregroundMode) {
-            /** Get notification from builder
-            * Set State.Paused for Playing
-            * Set State.Play for Pausing
-            * Start the Foreground Notification **/
-            Log.v(TAG, "STARTING FOREGROUND SERVICE NOTIFICATION !");
-            notificationParams = new String[] {topTrackList.get(curTrackPos).getAlbumThumbnailUrl(),NOTIF_ICON_PAUSE, NOTIF_START};
-            startSendNotification = new StartSendNotification(getApplicationContext());
-            startSendNotification.execute(notificationParams);
-            foregroundMode = true;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        notificationEnable = prefs.getBoolean(
+                        getString(R.string.pref_notification_toggle_key),
+                        Boolean.valueOf(getString(R.string.pref_notification_toggle_default))
+                );
+
+        if (notificationEnable) {
+            // Update foregroundMode
+            if (!foregroundMode) {
+                /** Get notification from builder
+                 * Set State.Paused for Playing
+                 * Set State.Play for Pausing
+                 * Start the Foreground Notification **/
+                Log.v(TAG, "STARTING FOREGROUND SERVICE NOTIFICATION !");
+                notificationParams = new String[]{topTrackList.get(curTrackPos).getAlbumThumbnailUrl(), NOTIF_ICON_PAUSE, NOTIF_START};
+                startSendNotification = new StartSendNotification(getApplicationContext());
+                startSendNotification.execute(notificationParams);
+                foregroundMode = true;
+            } else {
+                notificationParams = new String[]{topTrackList.get(curTrackPos).getAlbumThumbnailUrl(), NOTIF_ICON_PAUSE, NOTIF_UPDATE};
+                startSendNotification = new StartSendNotification(getApplicationContext());
+                startSendNotification.execute(notificationParams);
+            }
         } else {
-            notificationParams = new String[] {topTrackList.get(curTrackPos).getAlbumThumbnailUrl(),NOTIF_ICON_PAUSE, NOTIF_UPDATE};
-            startSendNotification = new StartSendNotification(getApplicationContext());
-            startSendNotification.execute(notificationParams);
+            if (foregroundMode) {
+                foregroundMode = false;
+                stopForeground(true);
+            }
+            Log.v(TAG, "Cancel the notification !");
+            if (mNotificationManager != null)
+                mNotificationManager.cancel(NOTIF_ID_FOREGROUND);
+
         }
     }
 
@@ -515,18 +495,6 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
         msg.what = action;
         try {
             uiMessenger.send(msg);
-        } catch (RemoteException e) {
-            Log.e(TAG, "Messenger Error !");
-            e.printStackTrace();
-        }
-        Log.v(TAG, "Message is sent !");
-    }
-
-    public void updateToASActivity (int action) {
-        Message msg = new Message();
-        msg.what = action;
-        try {
-            asaMessenger.send(msg);
         } catch (RemoteException e) {
             Log.e(TAG, "Messenger Error !");
             e.printStackTrace();
@@ -584,10 +552,6 @@ public class PlayMusicService extends Service implements MediaPlayer.OnPreparedL
             int smallIcon;
             String playPauseTitle;
             boolean onGoing;
-
-            Notification notifPlayMusic;
-            NotificationManager mNotificationManager;
-
 
             // Notification Manager
             mNotificationManager = (NotificationManager)

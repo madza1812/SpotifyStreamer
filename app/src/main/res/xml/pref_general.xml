@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <!--<EditTextPreference
-        android:title="@string/pref_country_label"
-        android:key="@string/pref_country_key"
-        android:defaultValue="@string/pref_country_default"
-        android:maxLength="41"
-        android:inputType="text"
-        android:singleLine="true"/>-->
+
+    <SwitchPreference
+        android:title="@string/pref_notification_toggle_title"
+        android:defaultValue="@string/pref_notification_toggle_default"
+        android:key="@string/pref_notification_toggle_key" />
+
     <ListPreference
-        android:title="Choose country"
+        android:title="@string/pref_country_label"
         android:key="@string/pref_country_key"
         android:defaultValue="@string/pref_country_default"
         android:entries="@array/pref_country_name"
         android:entryValues="@array/pref_country_codes"/>
-
 
 </PreferenceScreen>

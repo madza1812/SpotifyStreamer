@@ -57,20 +57,14 @@ public class ArtistTopTenFragment extends Fragment {
 
     private final String MUSIC_PLAYER_FRAGMENT_POPUP_TAG = "player_ui_popup";
 
-    private ApplicationManager appManager;
-    private Display display;
-
     private ArrayList<TrackParcel> topTenTracks;
     private String selectedArtistID;
-    private int selectedTrackPos;
 
     private TrackArrayAdapter<TrackParcel> mDetailAdapter;
 
     private ViewStub noTrackStub,welcomeDetailStub;
 
     private Intent topTrackIntent;
-
-    private ActivityCommunicator mActComm;
 
     private final int NULL_VALUE = 100;
 
@@ -82,9 +76,6 @@ public class ArtistTopTenFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         setHasOptionsMenu(true);
-
-        // Set activity position to check UI is shown before screen rotation.
-        this.appManager = (ApplicationManager) getActivity().getApplication();
     }
 
     @Override
@@ -101,7 +92,6 @@ public class ArtistTopTenFragment extends Fragment {
         final String KEY_ARTIST_NAME_ID = "id_name_artist";
 
         String[] artistNameId;
-        selectedTrackPos = NULL_VALUE;
 
         // Inflate the rootView
         View rootView =  inflater.inflate(R.layout.fragment_artist_top_ten, container, false);
@@ -215,22 +205,6 @@ public class ArtistTopTenFragment extends Fragment {
                         if (isLargeWidth()) {
                             // Show DialogFragment for Player_UI
                             showDialog(position, ARGUMENT_ACTION_START_NEW_PLAYLIST);
-                            /*// Launch The Player Activity for Selected Track
-                            topTrackIntent = new Intent(context, MusicPlayerActivity.class)
-                                    .setAction(INTENT_ACTION_START_NEW_PLAYLIST)
-                                    .putParcelableArrayListExtra(KEY_TOP_TEN_TRACKS_LIST, topTenTracks)
-                                    .putExtra(KEY_TRACK_POSITION, position);
-                            if (topTrackIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                                if (Build.VERSION.SDK_INT >= 16) {
-                                    startActivity(topTrackIntent,
-                                            ActivityOptions.makeCustomAnimation(getActivity(),
-                                                    R.animator.enter,
-                                                    R.animator.exit).toBundle());
-                                } else {
-                                    startActivity(topTrackIntent);
-                                }
-                            }*/
-                            selectedTrackPos = position;
                         }
                         else {
                             // Launch The Player Activity for Selected Track
@@ -275,13 +249,6 @@ public class ArtistTopTenFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if (activity instanceof ActivityCommunicator)
-            mActComm = (ActivityCommunicator) activity;
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
@@ -303,13 +270,6 @@ public class ArtistTopTenFragment extends Fragment {
         Log.v(TAG, "START onSaveInstanceState of ArtistTopTenFRAGMENT !");
         outState.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, topTenTracks);
         super.onSaveInstanceState(outState);
-    }
-
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mActComm= null;
     }
 
     private boolean isNetworkAvailable() {
@@ -357,10 +317,6 @@ public class ArtistTopTenFragment extends Fragment {
                     if (isLargeWidth()) {
                         Bundle bundle = new Bundle();
                         bundle.putParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST, topTenTracks);
-                        if (mActComm != null)
-                            mActComm.passToAcivity(bundle);
-                        else
-                            Log.v(LOG_TAG, "Something is WRONG !");
                     }
                 } else {
                     mDetailAdapter.clear();

@@ -29,20 +29,7 @@ public class MusicPlayerActivity extends AppCompatActivity {
 
     private final String ACTIONBAR_BG_COLOR = "#E65100";
 
-    private final String KEY_TOP_TEN_TRACKS_LIST = "list_tracks_top_ten";
-    private final String KEY_TRACK_POSITION = "track_position";
-    private final String KEY_ACTION = "action_argument";
-
     private final String MUSIC_PLAYER_FRAGMENT_FULLSCREEN_TAG = "player_ui_fullscreen";
-    private final String MUSIC_PLAYER_FRAGMENT_POPUP_TAG = "player_ui_popup";
-
-    private final String ACTION_LAUNCH_UI = "com.example.android.danga.spotifystreamer.app.LAUNCH_UI";
-
-    private ApplicationManager appManager;
-
-    private ArrayList<TrackParcel> topTenTracks;
-
-    private final int NULL_VALUE = 100;
 
 
     @Override
@@ -51,34 +38,8 @@ public class MusicPlayerActivity extends AppCompatActivity {
 
         Log.v(TAG, "onCREATE");
 
-        this.appManager = (ApplicationManager) getApplication();
         if (isLargeWidth()) {
             Log.v(TAG, "LARGE SCREEN IS DETECTED IN PLAYER UI ACTIVITY!");
-            /*setTheme(R.style.PopupTheme);
-            //this.requestWindowFeature(Window.FEATURE_ACTION_BAR);
-            setContentView(R.layout.activity_player);
-            this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND,
-                    WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-            WindowManager.LayoutParams params = this.getWindow().getAttributes();
-            Display display = this.getWindowManager().getDefaultDisplay();
-            Point size = new Point();
-            boolean landscape =
-                    (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
-            if (isLargeWidth()) {
-                if (landscape) {
-                    display.getSize(size);
-                    params.width = (int) (size.x * 0.7f);
-                    params.height = (int) (size.y * 0.8f);
-                } else {
-                    display.getSize(size);
-                    params.width = size.x;
-                    params.height = (int) (size.y * 0.7f);
-                }
-            }
-            params.alpha = 1.0f;
-            params.dimAmount = 0.5f;
-            this.getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
-            showDialog();*/
             finish();
             return;
         } else {
@@ -89,15 +50,6 @@ public class MusicPlayerActivity extends AppCompatActivity {
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor(ACTIONBAR_BG_COLOR)));
-        }
-    }
-    public void showDialog() {
-        FragmentManager mFragmentManager = getFragmentManager();
-        DialogFragment playerUiFrag = (MusicPlayerFragment)
-                mFragmentManager.findFragmentByTag(MUSIC_PLAYER_FRAGMENT_POPUP_TAG);
-        if (playerUiFrag == null) {
-            playerUiFrag = MusicPlayerFragment.newInstance();
-            playerUiFrag.show(mFragmentManager, MUSIC_PLAYER_FRAGMENT_POPUP_TAG);
         }
     }
 

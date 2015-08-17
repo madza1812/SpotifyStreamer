@@ -30,7 +30,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 
-public class ArtistSearchActivity extends AppCompatActivity implements ActivityCommunicator {
+public class ArtistSearchActivity extends AppCompatActivity {
 
     private final String TAG = ArtistSearchActivity.class.getSimpleName();
 
@@ -42,9 +42,6 @@ public class ArtistSearchActivity extends AppCompatActivity implements ActivityC
     private final String KEY_TOP_TEN_TRACKS_LIST = "list_tracks_top_ten";
     private final String KEY_TRACK_POSITION = "track_position";
     private final String KEY_ACTION = "action_argument";
-    private final String KEY_ASA_MESSENGER = "messenger_asa";
-
-    private final int MSG_LAUNCH_POP_UP_UI = 4;
 
     private final String MUSIC_PLAYER_FRAGMENT_POPUP_TAG = "player_ui_popup";
 
@@ -53,8 +50,6 @@ public class ArtistSearchActivity extends AppCompatActivity implements ActivityC
 
     private ApplicationManager appManager;
     private Display display;
-
-    public FragmentCommunicator mFragComm;
 
     PlayMusicService playMusicSrv;
     private boolean srvBound = false;
@@ -102,20 +97,14 @@ public class ArtistSearchActivity extends AppCompatActivity implements ActivityC
         if ( isLargeWidth()) {
             // Tablet screen
             setContentView(R.layout.activity_artist_search);
-
         } else {
+            // Regular screen
             setContentView(R.layout.activity_artist_search);
         }
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor(ACTIONBAR_BG_COLOR)));
         }
-    }
-
-    @Override
-    public void onAttachFragment(Fragment fragment) {
-        super.onAttachFragment(fragment);
-        Log.v(TAG, "Fragment:" + fragment.toString() +"is attached to this activity: " + this.toString());
     }
 
     @Override
@@ -167,6 +156,11 @@ public class ArtistSearchActivity extends AppCompatActivity implements ActivityC
                         startActivity(launchUiIntent);
                 }
                 return true;
+
+            case R.id.action_settings:
+                Intent settingsIntent = new Intent(this.getApplicationContext(), SettingsActivity.class);
+                if (settingsIntent.resolveActivity(this.getPackageManager()) != null)
+                    startActivity(settingsIntent);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -212,8 +206,5 @@ public class ArtistSearchActivity extends AppCompatActivity implements ActivityC
     private boolean isLargeWidth(){
         return getResources().getBoolean(R.bool.large_screen);
     }
-    @Override
-    public void passToAcivity(Bundle bundle) {
-        // Obtain Bundle data from fragments and save for restoring during rotation.
-    }
+
 }

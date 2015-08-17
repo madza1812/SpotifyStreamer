@@ -6,12 +6,14 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -45,15 +47,13 @@ import retrofit.RetrofitError;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class ArtistSearchFragment extends Fragment implements FragmentCommunicator{
+public class ArtistSearchFragment extends Fragment {
 
     public final String TAG = ArtistSearchFragment.class.getSimpleName();
 
     private final String KEY_ARTISTS_LIST = "list_artists";
     private final String KEY_QUERY = "query";
     private final String KEY_ARTIST_NAME_ID = "id_name_artist";
-    private final String KEY_TOP_TEN_TRACKS_LIST = "list_tracks_top_ten";
-    private final String KEY_TRACK_POSITION = "track_position";
     private final String KEY_ACTION = "action_argument";
 
     private final String INTENT_ACTION_GET_TOP_TEN = "top_ten_get_action_intent";
@@ -73,20 +73,11 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
     private ArrayList<ArtistParcel> listArtists;
     private String savedQuery;
 
-    private int trackPosition;
-    private ArrayList<TrackParcel> topSavedTrack;
-
     // Dual-Pane: keep track of current selected artist
     private static ArtistParcel currentArtist;
 
-    private ApplicationManager appManager;
-    private Display display;
-
     private ArtistArrayAdapter<ArtistParcel> mArtistAdapter;
     private Intent detailIntent;
-
-
-    private ActivityCommunicator mActComm;
 
     // Butter Knife Binding Views
     @Bind(R.id.search_artist) SearchView searchView;
@@ -103,8 +94,6 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
         super.onCreate(savedInstanceState);
 
         setHasOptionsMenu(true);
-        // Initialize Application Manager
-        this.appManager = (ApplicationManager) getActivity().getApplication();
     }
 
     @Override
@@ -359,18 +348,6 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if (activity instanceof ActivityCommunicator) {
-            // initialize FragmentCommunicator
-            ((ArtistSearchActivity) activity).mFragComm = this;
-            // initialize ActivityCommunicator
-            mActComm = (ArtistSearchActivity) activity;
-        }
-
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
         Log.v(TAG, "START onSaveInstanceState of ArtistSearchFRAGMENT !");
         outState.putParcelableArrayList(KEY_ARTISTS_LIST, listArtists);
@@ -393,14 +370,6 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
 
     private boolean isLargeWidth(){
         return getActivity().getResources().getBoolean(R.bool.large_screen);
-    }
-
-    @Override
-    public void passToFragment(Bundle bundle) {
-        final int NULL_VALUE = 100;
-
-        trackPosition = bundle.getInt(KEY_TRACK_POSITION, NULL_VALUE);
-        topSavedTrack = bundle.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
     }
 
     // Background loading Artits using AsyncTask
@@ -457,7 +426,23 @@ public class ArtistSearchFragment extends Fragment implements FragmentCommunicat
             queryBuilder.append("*");
             SpotifyApi api = new SpotifyApi();
             SpotifyService spotifyService = api.getService();
-            options.put(spotifyService.COUNTRY, Locale.getDefault().getCountry());
+
+            // Get the country market from sharepreference
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String countryCode = prefs.getString(
+                    getString(R.string.pref_country_key),
+                    getString(R.string.pref_country_default)
+            );
+
+            final String CURRENT_LOCATION = "LO";
+            Log.v(TAG, "Country " + countryCode + " is chosen by user!");
+            if (CURRENT_LOCATION.equals(countryCode)) {
+                options.put(spotifyService.COUNTRY, Locale.getDefault().getCountry());
+            } else {
+                options.put(spotifyService.COUNTRY, countryCode);
+            }
+
+
 
             try {
                 results = spotifyService.searchArtists(queryBuilder.toString().toUpperCase(), options);

@@ -281,47 +281,40 @@ public class MusicPlayerFragment extends DialogFragment {
         rootView = inflater.inflate(R.layout.fragment_player_ui, container, false);
         ButterKnife.bind(this, rootView);
 
-        // Setup Like-ActionBar
-        Toolbar popupActionBar = (Toolbar)rootView.findViewById(R.id.toolbar);
-        //((AppCompatActivity) getActivity()).setSupportActionBar(popupActionBar);
-        popupActionBar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-
-        ImageButton upButton = (ImageButton) popupActionBar.findViewById(R.id.upButton);
-        upButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-
-        popupActionBar.inflateMenu(R.menu.menu_player);
-        popupActionBar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.home:
-                        dismiss();
-                        getActivity().finish();
-                        break;
-                    case R.id.action_share:
-                        ShareActionProvider mShareActionProvider;
-                        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
-                        if (mShareActionProvider != null) {
-                            mShareActionProvider.setShareIntent(doShare());
-                        } else
-                            Log.v(TAG, "Share Action Provider is null !");
-                        break;
+        if (isLargeWidth()) {
+            // Setup Like-ActionBar
+            Toolbar popupActionBar = (Toolbar) rootView.findViewById(R.id.toolbar);
+            ImageButton upButton = (ImageButton) popupActionBar.findViewById(R.id.upButton);
+            upButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dismiss();
                 }
-                return true;
-            }
-        });
-        // End setup Like-ActionBar
+            });
 
+            popupActionBar.inflateMenu(R.menu.menu_player);
+            popupActionBar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    switch (item.getItemId()) {
+                        case R.id.home:
+                            dismiss();
+                            getActivity().finish();
+                            break;
+                        case R.id.action_share:
+                            ShareActionProvider mShareActionProvider;
+                            mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+                            if (mShareActionProvider != null) {
+                                mShareActionProvider.setShareIntent(doShare());
+                            } else
+                                Log.v(TAG, "Share Action Provider is null !");
+                            break;
+                    }
+                    return true;
+                }
+            });
+            // End setup Like-ActionBar
+        }
         if (savedInstanceState != null) {
             topTrackList = savedInstanceState.getParcelableArrayList(KEY_TOP_TEN_TRACKS_LIST);
             trackPosition = savedInstanceState.getInt(KEY_TRACK_POSITION);
@@ -357,12 +350,12 @@ public class MusicPlayerFragment extends DialogFragment {
     public void onStart() {
         Log.v(TAG, "Music Fragment is gonna start");
         super.onStart();
-        Display display = getActivity().getWindowManager().getDefaultDisplay();
-        ViewGroup.LayoutParams params = getDialog().getWindow().getAttributes();
-        Point size = new Point();
-        boolean landscape =
-                (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         if (isLargeWidth()) {
+            Display display = getActivity().getWindowManager().getDefaultDisplay();
+            ViewGroup.LayoutParams params = getDialog().getWindow().getAttributes();
+            Point size = new Point();
+            boolean landscape =
+                    (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
             if (landscape) {
                 display.getSize(size);
                 params.width = (int) (size.x * 0.7f);
@@ -373,9 +366,10 @@ public class MusicPlayerFragment extends DialogFragment {
                 params.height = (int) (size.y * 0.7f);
             }
             getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
+
+            Log.v(TAG, "Params Width: " + params.width);
+            Log.v(TAG, "Params Height: " + params.height);
         }
-        Log.v(TAG, "Params Width: " + params.width);
-        Log.v(TAG, "Params Height: " + params.height);
     }
 
     @Override
@@ -502,7 +496,7 @@ public class MusicPlayerFragment extends DialogFragment {
                     .into(albumThumbnail);
 
         trackName.setText(topTrackList.get(trackPosition).getName());
-        playPauseBtn.setImageResource(R.drawable.ic_pause);
+        playPauseBtn.setImageResource(R.drawable.ic_play);
         seekBar.setProgress(0);
         currentDuration.setText(ZERO_TIME);
         totalDuration.setText(TOTAL_TIME);
@@ -514,19 +508,22 @@ public class MusicPlayerFragment extends DialogFragment {
         playPauseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switch (playMusicSrv.getMPState()) {
-                    case Started:
-                        playPauseBtn.setImageResource(R.drawable.ic_play);
-                        playMusicSrv.pauseMusic();
-                        break;
-                    case Paused:
-                        playPauseBtn.setImageResource(R.drawable.ic_pause);
-                        playMusicSrv.resumeMusic();
-                        break;
-                    default:
-                        Log.v(TAG, "MP STATE either Started or Paused!");
-                        break;
-                }
+                if (isNetworkAvailable()) {
+                    switch (playMusicSrv.getMPState()) {
+                        case Started:
+                            playPauseBtn.setImageResource(R.drawable.ic_play);
+                            playMusicSrv.pauseMusic();
+                            break;
+                        case Paused:
+                            playPauseBtn.setImageResource(R.drawable.ic_pause);
+                            playMusicSrv.resumeMusic();
+                            break;
+                        default:
+                            Log.v(TAG, "MP STATE either Started or Paused!");
+                            break;
+                    }
+                } else
+                    Util.displayToast(getActivity(), "Lost Connection !");
             }
         });
 
@@ -534,12 +531,15 @@ public class MusicPlayerFragment extends DialogFragment {
         previousBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playMusicSrv.previousMusic();
-                trackPosition--;
-                if (trackPosition < 0)
-                    trackPosition = topTrackList.size() - 1;
-                // Update Views
-                updateMPView(context);
+                if (isNetworkAvailable()) {
+                    playMusicSrv.previousMusic();
+                    trackPosition--;
+                    if (trackPosition < 0)
+                        trackPosition = topTrackList.size() - 1;
+                    // Update Views
+                    updateMPView(context);
+                } else
+                    Util.displayToast(getActivity(), "Lost Connection !");
             }
         });
 
@@ -547,12 +547,15 @@ public class MusicPlayerFragment extends DialogFragment {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playMusicSrv.nextMusic();
-                trackPosition++;
-                if (trackPosition == topTrackList.size())
-                    trackPosition = 0;
-                // Update Views
-                updateMPView(context);
+                if (isNetworkAvailable()) {
+                    playMusicSrv.nextMusic();
+                    trackPosition++;
+                    if (trackPosition == topTrackList.size())
+                        trackPosition = 0;
+                    // Update Views
+                    updateMPView(context);
+                } else
+                    Util.displayToast(getActivity(), "Lost Connection !");
             }
         });
     }
